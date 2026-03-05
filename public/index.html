@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DreamHack CTF Calendar</title>
+<meta name="description" content="DreamHack CTFイベントをGoogleカレンダーに登録。iCal形式で配信。">
+<meta property="og:title" content="DreamHack CTF Calendar">
+<meta property="og:description" content="DreamHack CTFイベントをGoogleカレンダーに登録。iCal形式で配信。">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#0a0a0a;color:#e0e0e0;min-height:100vh;padding:2rem}
+.c{max-width:700px;margin:0 auto}
+h1{font-size:1.8rem;margin-bottom:1.5rem;color:#fff}
+.card{background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:1.5rem;margin-bottom:1.5rem}
+.card h2{font-size:1.1rem;margin-bottom:1rem;color:#aaa}
+.ub{display:flex;gap:.5rem}
+#u{flex:1;background:#0a0a0a;border:1px solid #444;border-radius:4px;padding:.75rem;color:#fff;font-family:monospace;font-size:.9rem}
+button{background:#2563eb;color:#fff;border:none;border-radius:4px;padding:.75rem 1.25rem;cursor:pointer;font-weight:500}
+button:hover{background:#1d4ed8}
+.o{margin-top:1rem}
+.o h3{font-size:.95rem;margin-bottom:.5rem;color:#aaa}
+.cg{display:flex;flex-wrap:wrap;gap:.75rem}
+label{display:flex;align-items:center;gap:.4rem;cursor:pointer;padding:.5rem .75rem;background:#111;border-radius:4px;font-size:.9rem}
+label:hover{background:#222}
+input{accent-color:#2563eb;width:16px;height:16px}
+a{color:#60a5fa}
+</style>
+</head>
+<body>
+<div class="c">
+<h1>DreamHack CTF Calendar</h1>
+<div class="card">
+<h2>Calendar URL</h2>
+<div class="ub"><input id="u" readonly><button onclick="navigator.clipboard.writeText(u.value)">Copy</button></div>
+<p style="margin-top:1rem;color:#888;font-size:.9rem">Google Calendar: Settings &gt; Add calendar &gt; From URL</p>
+</div>
+<div class="card">
+<h2>Options</h2>
+<div class="o"><h3>Scope</h3>
+<div class="cg">
+<label><input type="checkbox" id="o" checked>ongoing</label>
+<label><input type="checkbox" id="w" checked>waiting</label>
+<label><input type="checkbox" id="e" checked>ended</label>
+</div></div>
+<div class="o"><h3>Filter</h3>
+<div class="cg"><label><input type="checkbox" id="d">Dreamhack official only</label></div>
+</div></div>
+<p style="color:#666;font-size:.85rem">Data from <a href="https://dreamhack.io/ctf" target="_blank">dreamhack.io</a></p>
+</div>
+<script>
+const b=location.origin+'/calendar.ics';
+function f(){
+const s=['o','w','e'].filter(i=>document.getElementById(i).checked).map(i=>({o:'ongoing',w:'waiting',e:'ended'})[i]);
+const p=new URLSearchParams;
+if(s.length&&s.length<3)p.set('scope',s.join(','));
+if(d.checked)p.set('filterings','dreamhack');
+const q=p.toString();
+u.value=b+(q?'?'+q:'');
+}
+['o','w','e','d'].forEach(i=>document.getElementById(i).onchange=f);
+f();
+</script>
+</body>
+</html>

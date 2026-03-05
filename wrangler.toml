@@ -1,0 +1,4 @@
+name = "dreamhack-calendar"
+main = "src/index.ts"
+compatibility_date = "2025-03-05"
+assets = { directory = "public" }
