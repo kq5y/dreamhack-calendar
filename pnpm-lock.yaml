@@ -7,6 +7,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      ical-generator:
+        specifier: ^10.0.0
+        version: 10.0.0
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^4.20260305.1
@@ -416,6 +420,39 @@ packages:
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
 
+  ical-generator@10.0.0:
+    resolution: {integrity: sha512-YUQ7H4eZdLfYvx3zE/qN4AoG0qqwMZG37vLdWzysXFDn/YQEfctZ9tQuPSBncARKgv79d2smWf5Sh67k6xiZfg==}
+    engines: {node: 20 || 22 || >=24}
+    peerDependencies:
+      '@touch4it/ical-timezones': '>=1.6.0'
+      '@types/luxon': '>= 1.26.0'
+      '@types/mocha': '>= 8.2.1'
+      '@types/node': '*'
+      dayjs: '>= 1.10.0'
+      luxon: '>= 1.26.0'
+      moment: '>= 2.29.0'
+      moment-timezone: '>= 0.5.33'
+      rrule: '>= 2.6.8'
+    peerDependenciesMeta:
+      '@touch4it/ical-timezones':
+        optional: true
+      '@types/luxon':
+        optional: true
+      '@types/mocha':
+        optional: true
+      '@types/node':
+        optional: true
+      dayjs:
+        optional: true
+      luxon:
+        optional: true
+      moment:
+        optional: true
+      moment-timezone:
+        optional: true
+      rrule:
+        optional: true
+
   kleur@4.1.5:
     resolution: {integrity: sha512-o+NO+8WrRiQEE4/7nwRJhN1HWpVmJm511pBHUxPLtp0BUISzlBplORYSmTclCnJvQq2tKu/sgl3xVpkc7ZWuQQ==}
     engines: {node: '>=6'}
@@ -766,6 +803,8 @@ snapshots:
 
   fsevents@2.3.3:
     optional: true
+
+  ical-generator@10.0.0: {}
 
   kleur@4.1.5: {}
 
