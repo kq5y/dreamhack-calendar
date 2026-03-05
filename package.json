@@ -13,7 +13,6 @@
     "wrangler": "^4.70.0"
   },
   "dependencies": {
-    "ical-generator": "^10.0.0",
     "timezones-ical-library": "^2.1.2"
   }
 }
