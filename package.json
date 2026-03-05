@@ -11,8 +11,5 @@
     "@cloudflare/workers-types": "^4.20260305.1",
     "typescript": "^5.9.3",
     "wrangler": "^4.70.0"
-  },
-  "dependencies": {
-    "timezones-ical-library": "^2.1.2"
   }
 }

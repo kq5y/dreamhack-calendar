@@ -1,5 +1,3 @@
-import { tzlib_get_ical_block } from "timezones-ical-library";
-
 interface Season {
   id: number;
   abbreviated_name: string;
@@ -16,32 +14,21 @@ interface CTFEvent {
   ends_at: string;
 }
 
-const TIMEZONE = "Asia/Seoul";
-
-function getVtimezone(): string {
-  const result = tzlib_get_ical_block(TIMEZONE);
-  if (Array.isArray(result) && result[0]) {
-    return result[0];
-  }
-  return "";
-}
-
 const ICAL_HEADER = `BEGIN:VCALENDAR\r
 VERSION:2.0\r
 PRODID:-//DreamHack CTF Calendar//dreamhack-calendar//EN\r
 CALSCALE:GREGORIAN\r
 METHOD:PUBLISH\r
 X-WR-CALNAME:DreamHack CTF\r
-X-WR-TIMEZONE:${TIMEZONE}\r
 `;
 
 function escapeICal(text: string): string {
   return text.replace(/[\\;,\n]/g, (c) => (c === "\n" ? "\\n" : `\\${c}`));
 }
 
-function toICalDate(iso: string): string {
-  // "2026-05-02T09:00:00+09:00" → "20260502T090000"
-  return iso.slice(0, 19).replace(/[-:]/g, "");
+function toUTCDate(iso: string): string {
+  // "2026-05-02T09:00:00+09:00" → "20260502T000000Z"
+  return new Date(iso).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
 }
 
 function buildDescription(event: CTFEvent): string {
@@ -56,13 +43,8 @@ function buildDescription(event: CTFEvent): string {
 }
 
 function generateICal(events: CTFEvent[]): string {
-  const now = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
-  const vtimezone = getVtimezone();
+  const now = toUTCDate(new Date().toISOString());
   let ical = ICAL_HEADER;
-
-  if (vtimezone) {
-    ical += vtimezone + "\r\n";
-  }
 
   for (const e of events) {
     const url = `https://dreamhack.io/ctf/${e.id}`;
@@ -73,8 +55,8 @@ function generateICal(events: CTFEvent[]): string {
     ical += `BEGIN:VEVENT\r
 UID:ctf-${e.id}@dreamhack.io\r
 DTSTAMP:${now}\r
-DTSTART;TZID=${TIMEZONE}:${toICalDate(e.starts_at)}\r
-DTEND;TZID=${TIMEZONE}:${toICalDate(e.ends_at)}\r
+DTSTART:${toUTCDate(e.starts_at)}\r
+DTEND:${toUTCDate(e.ends_at)}\r
 SUMMARY:${escapeICal(e.title)}\r
 DESCRIPTION:${escapeICal(buildDescription(e))}\r
 URL:${url}\r
