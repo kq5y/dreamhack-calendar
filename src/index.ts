@@ -1,14 +1,7 @@
-import ical from "ical-generator";
-
 interface Season {
   id: number;
   abbreviated_name: string;
-  number: number;
   title: string;
-  starts_at: string;
-  ends_at: string;
-  is_finalized: boolean;
-  has_rating_division: boolean;
 }
 
 interface CTFEvent {
@@ -17,82 +10,73 @@ interface CTFEvent {
   organized_by: string;
   season: Season | null;
   ctf_type: string;
-  image: string | null;
   starts_at: string;
   ends_at: string;
-  is_finalized: boolean;
-  is_restricted: boolean;
-  is_waiting: boolean;
-  is_playing: boolean;
-  is_ongoing: boolean;
-  is_ended: boolean;
-  cnt_participants: number;
 }
 
-const TIMEZONE = "Asia/Seoul";
+const ICAL_HEADER = `BEGIN:VCALENDAR\r
+VERSION:2.0\r
+PRODID:-//DreamHack CTF Calendar//dreamhack-calendar//EN\r
+CALSCALE:GREGORIAN\r
+METHOD:PUBLISH\r
+X-WR-CALNAME:DreamHack CTF\r
+X-WR-TIMEZONE:Asia/Seoul\r
+BEGIN:VTIMEZONE\r
+TZID:Asia/Seoul\r
+X-LIC-LOCATION:Asia/Seoul\r
+BEGIN:STANDARD\r
+TZOFFSETFROM:+0900\r
+TZOFFSETTO:+0900\r
+TZNAME:KST\r
+DTSTART:19700101T000000\r
+END:STANDARD\r
+END:VTIMEZONE\r
+`;
 
-// Korea Standard Time (KST) - no DST
-const VTIMEZONE = `BEGIN:VTIMEZONE
-TZID:Asia/Seoul
-X-LIC-LOCATION:Asia/Seoul
-BEGIN:STANDARD
-TZOFFSETFROM:+0900
-TZOFFSETTO:+0900
-TZNAME:KST
-DTSTART:19700101T000000
-END:STANDARD
-END:VTIMEZONE`;
+function escapeICal(text: string): string {
+  return text.replace(/[\\;,\n]/g, (c) => (c === "\n" ? "\\n" : `\\${c}`));
+}
 
-function getVtimezoneComponent(): string {
-  return VTIMEZONE;
+function toICalDate(iso: string): string {
+  // "2026-05-02T09:00:00+09:00" → "20260502T090000"
+  return iso.slice(0, 19).replace(/[-:]/g, "").replace("T", "T");
 }
 
 function buildDescription(event: CTFEvent): string {
   const lines: string[] = [];
-
   lines.push(`Organized by: ${event.organized_by}`);
   lines.push(`Type: ${event.ctf_type}`);
-
   if (event.season) {
     lines.push(`Season: ${event.season.title}`);
   }
-
-  lines.push("");
   lines.push(`URL: https://dreamhack.io/ctf/${event.id}`);
-
-  return lines.join("\n");
+  return lines.join("\\n");
 }
 
 function generateICal(events: CTFEvent[]): string {
-  const calendar = ical({
-    name: "DreamHack CTF",
-    timezone: {
-      name: TIMEZONE,
-      generator: getVtimezoneComponent,
-    },
-  });
+  const now = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  let ical = ICAL_HEADER;
 
-  for (const event of events) {
-    const url = `https://dreamhack.io/ctf/${event.id}`;
-    const categories: string[] = [event.ctf_type];
+  for (const e of events) {
+    const url = `https://dreamhack.io/ctf/${e.id}`;
+    const categories = e.season
+      ? `${e.ctf_type},${e.season.abbreviated_name}`
+      : e.ctf_type;
 
-    if (event.season) {
-      categories.push(event.season.abbreviated_name);
-    }
-
-    calendar.createEvent({
-      id: `ctf-${event.id}@dreamhack.io`,
-      start: new Date(event.starts_at),
-      end: new Date(event.ends_at),
-      timezone: TIMEZONE,
-      summary: event.title,
-      description: buildDescription(event),
-      url,
-      categories: categories.map((name) => ({ name })),
-    });
+    ical += `BEGIN:VEVENT\r
+UID:ctf-${e.id}@dreamhack.io\r
+DTSTAMP:${now}\r
+DTSTART;TZID=Asia/Seoul:${toICalDate(e.starts_at)}\r
+DTEND;TZID=Asia/Seoul:${toICalDate(e.ends_at)}\r
+SUMMARY:${escapeICal(e.title)}\r
+DESCRIPTION:${escapeICal(buildDescription(e))}\r
+URL:${url}\r
+CATEGORIES:${categories}\r
+END:VEVENT\r
+`;
   }
 
-  return calendar.toString();
+  return `${ical}END:VCALENDAR\r\n`;
 }
 
 async function fetchWithCache(
