@@ -20,26 +20,15 @@ PRODID:-//DreamHack CTF Calendar//dreamhack-calendar//EN\r
 CALSCALE:GREGORIAN\r
 METHOD:PUBLISH\r
 X-WR-CALNAME:DreamHack CTF\r
-X-WR-TIMEZONE:Asia/Seoul\r
-BEGIN:VTIMEZONE\r
-TZID:Asia/Seoul\r
-X-LIC-LOCATION:Asia/Seoul\r
-BEGIN:STANDARD\r
-TZOFFSETFROM:+0900\r
-TZOFFSETTO:+0900\r
-TZNAME:KST\r
-DTSTART:19700101T000000\r
-END:STANDARD\r
-END:VTIMEZONE\r
 `;
 
 function escapeICal(text: string): string {
   return text.replace(/[\\;,\n]/g, (c) => (c === "\n" ? "\\n" : `\\${c}`));
 }
 
-function toICalDate(iso: string): string {
-  // "2026-05-02T09:00:00+09:00" → "20260502T090000"
-  return iso.slice(0, 19).replace(/[-:]/g, "").replace("T", "T");
+function toUTCDate(iso: string): string {
+  // "2026-05-02T09:00:00+09:00" → "20260502T000000Z" (UTC)
+  return new Date(iso).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
 }
 
 function buildDescription(event: CTFEvent): string {
@@ -54,7 +43,7 @@ function buildDescription(event: CTFEvent): string {
 }
 
 function generateICal(events: CTFEvent[]): string {
-  const now = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  const now = toUTCDate(new Date().toISOString());
   let ical = ICAL_HEADER;
 
   for (const e of events) {
@@ -66,8 +55,8 @@ function generateICal(events: CTFEvent[]): string {
     ical += `BEGIN:VEVENT\r
 UID:ctf-${e.id}@dreamhack.io\r
 DTSTAMP:${now}\r
-DTSTART;TZID=Asia/Seoul:${toICalDate(e.starts_at)}\r
-DTEND;TZID=Asia/Seoul:${toICalDate(e.ends_at)}\r
+DTSTART:${toUTCDate(e.starts_at)}\r
+DTEND:${toUTCDate(e.ends_at)}\r
 SUMMARY:${escapeICal(e.title)}\r
 DESCRIPTION:${escapeICal(buildDescription(e))}\r
 URL:${url}\r
