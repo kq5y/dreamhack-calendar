@@ -1,3 +1,6 @@
+import ical from "ical-generator";
+import { tzlib_get_ical_block } from "timezones-ical-library";
+
 interface Season {
   id: number;
   abbreviated_name: string;
@@ -14,21 +17,20 @@ interface CTFEvent {
   ends_at: string;
 }
 
-const ICAL_HEADER = `BEGIN:VCALENDAR\r
-VERSION:2.0\r
-PRODID:-//DreamHack CTF Calendar//dreamhack-calendar//EN\r
-CALSCALE:GREGORIAN\r
-METHOD:PUBLISH\r
-X-WR-CALNAME:DreamHack CTF\r
-`;
+const TIMEZONE = "Asia/Seoul";
 
-function escapeICal(text: string): string {
-  return text.replace(/[\\;,\n]/g, (c) => (c === "\n" ? "\\n" : `\\${c}`));
+function getVtimezoneComponent(tz: string): string | null {
+  const result = tzlib_get_ical_block(tz);
+  if (Array.isArray(result) && result[0]) {
+    return result[0];
+  }
+  return null;
 }
 
-function toUTCDate(iso: string): string {
-  // "2026-05-02T09:00:00+09:00" → "20260502T000000Z" (UTC)
-  return new Date(iso).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+function parseTime(isoString: string): Date {
+  // APIの時刻をそのままDateに変換（UTCに変換される）
+  // ical-generatorがTZIDで変換してくれる
+  return new Date(isoString);
 }
 
 function buildDescription(event: CTFEvent): string {
@@ -39,33 +41,39 @@ function buildDescription(event: CTFEvent): string {
     lines.push(`Season: ${event.season.title}`);
   }
   lines.push(`URL: https://dreamhack.io/ctf/${event.id}`);
-  return lines.join("\\n");
+  return lines.join("\n");
 }
 
 function generateICal(events: CTFEvent[]): string {
-  const now = toUTCDate(new Date().toISOString());
-  let ical = ICAL_HEADER;
+  const calendar = ical({
+    name: "DreamHack CTF",
+    timezone: {
+      name: TIMEZONE,
+      generator: getVtimezoneComponent,
+    },
+  });
 
-  for (const e of events) {
-    const url = `https://dreamhack.io/ctf/${e.id}`;
-    const categories = e.season
-      ? `${e.ctf_type},${e.season.abbreviated_name}`
-      : e.ctf_type;
+  for (const event of events) {
+    const url = `https://dreamhack.io/ctf/${event.id}`;
+    const categories: string[] = [event.ctf_type];
 
-    ical += `BEGIN:VEVENT\r
-UID:ctf-${e.id}@dreamhack.io\r
-DTSTAMP:${now}\r
-DTSTART:${toUTCDate(e.starts_at)}\r
-DTEND:${toUTCDate(e.ends_at)}\r
-SUMMARY:${escapeICal(e.title)}\r
-DESCRIPTION:${escapeICal(buildDescription(e))}\r
-URL:${url}\r
-CATEGORIES:${categories}\r
-END:VEVENT\r
-`;
+    if (event.season) {
+      categories.push(event.season.abbreviated_name);
+    }
+
+    calendar.createEvent({
+      id: `ctf-${event.id}@dreamhack.io`,
+      start: parseTime(event.starts_at),
+      end: parseTime(event.ends_at),
+      timezone: TIMEZONE,
+      summary: event.title,
+      description: buildDescription(event),
+      url,
+      categories: categories.map((name) => ({ name })),
+    });
   }
 
-  return `${ical}END:VCALENDAR\r\n`;
+  return calendar.toString();
 }
 
 async function fetchWithCache(
