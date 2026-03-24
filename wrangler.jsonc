@@ -3,6 +3,9 @@
   "name": "dreamhack-calendar",
   "main": "src/index.ts",
   "compatibility_date": "2026-02-24",
+  "placement": {
+    "region": "aws:ap-northeast-2"
+  },
   "assets": {
     "directory": "public"
   },
